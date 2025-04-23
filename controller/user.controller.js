@@ -172,14 +172,16 @@ const login = async(req, res) => {
         user.RefreshToken = refreshToken;
         await user.save();
 
-        res.cookie("accessToken",accessToken, cookieOptions);
-        res.cookie("refreshToken",refreshToken, cookieOptions);
-
+        
         const cookieOptions = {
             expires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 1 day
             httpOnly: true,
         };
+        
+        res.cookie("accessToken",accessToken, cookieOptions);
+        res.cookie("refreshToken",refreshToken, cookieOptions);
 
+        
         return res.status(200).json({
             success: true,
             message: "Login successful",
