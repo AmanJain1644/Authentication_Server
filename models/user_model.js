@@ -29,6 +29,7 @@ const UserSchema = new mongoose.Schema({
     },
     VerificationToken: String,
     VerificationTokenExpiry:Date,
+    RefreshToken:String,
 });
 
 UserSchema.pre('save',async function(next){

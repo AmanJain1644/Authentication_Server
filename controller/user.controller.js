@@ -116,7 +116,7 @@ const verify = async(req,res)=>{
 
 // login 
 
-const login = async (req, res) => {
+const login = async(req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
@@ -151,18 +151,34 @@ const login = async (req, res) => {
             });
         }
 
-        const jwtToken = jwt.sign(
+        // const jwtToken = jwt.sign(
+        //     { id: user._id },
+        //     process.env.JWT_SCERET,
+        //     { expiresIn: "15m" }
+        // );
+
+        const accessToken = jwt.sign(
             { id: user._id },
-            process.env.JWT_SCERET,
-            { expiresIn: "15m" }
+            process.env.Access_SCERET,
+            { expiresIn:process.env.ACESSTOKEN_EXPIRY }
         );
+
+        const refreshToken = jwt.sign(
+            { id: user._id },
+            process.env.Refresh_SCERET,
+            { expiresIn:process.env.REFRESHTOKEN_EXPIRY }
+        );
+        
+        user.RefreshToken = refreshToken;
+        await user.save();
+
+        res.cookie("accessToken",accessToken, cookieOptions);
+        res.cookie("refreshToken",refreshToken, cookieOptions);
 
         const cookieOptions = {
             expires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 1 day
             httpOnly: true,
         };
-
-        res.cookie("jwtToken", jwtToken, cookieOptions);
 
         return res.status(200).json({
             success: true,
