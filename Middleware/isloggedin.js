@@ -1,4 +1,4 @@
-import User from "../models/user_model";
+import User from "../models/user_model.js";
 import jwt from "jsonwebtoken";
 
 
@@ -17,16 +17,14 @@ const isLoggedIn = async(req,res,next)=>{
 
         const accessToken = req.cookies.accessToken;
         const refreshToken = req.cookies.refreshToken;
+
         if(accessToken){
             try {                
                 const decodeAccess = jwt.verify(accessToken,process.env.Access_SCERET);
                 req.user = decodeAccess.id;
                 return next();
             } catch (error) {
-                return res.status(400).json({
-                    success:false,
-                    message:"internal server error"
-                });
+                console.log(`internal server Access error: ${error}`);
                                 
             }
         }
@@ -38,8 +36,9 @@ const isLoggedIn = async(req,res,next)=>{
             });
         }
 
+        let decodeRefresh;
         try {
-            const decodeRefresh = jwt.verify(refreshToken,process.env.Refresh_SCERET);
+            decodeRefresh = jwt.verify(refreshToken,process.env.Refresh_SCERET);
                
         } catch (error) {
             return res.status(400).json({
@@ -89,7 +88,8 @@ const isLoggedIn = async(req,res,next)=>{
    } catch (error) {
         return res.status(400).json({
             success:false,
-            message:"internal server error"
+            message:`internal server error: ${error}`,
+
         });
    }
 };

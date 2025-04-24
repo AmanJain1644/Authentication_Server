@@ -39,7 +39,7 @@ const resgister = async(req,res)=>{
        }
 
        const token = crypto.randomBytes(32).toString("hex");
-       const tokenExpiry = Date.now() + 10*60*60*1000;
+       const tokenExpiry =new Date (Date.now() + 10*60*1000);
 
        const user = await User.create({
         name,
@@ -85,7 +85,7 @@ const verify = async(req,res)=>{
         // get user
         const user = await User.findOne({
             VerificationToken:token,
-            VerificationTokenExpiry:{$gt: Date.now()}
+            VerificationTokenExpiry:{$gt: new Date()}
         })
 
         if(!user){
@@ -169,7 +169,7 @@ const login = async(req, res) => {
             { expiresIn:process.env.REFRESHTOKEN_EXPIRY }
         );
         
-        user.RefreshToken = refreshToken;
+        user.refreshToken = refreshToken;
         await user.save();
 
         
@@ -177,10 +177,11 @@ const login = async(req, res) => {
             expires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 1 day
             httpOnly: true,
         };
+
         
         res.cookie("accessToken",accessToken, cookieOptions);
         res.cookie("refreshToken",refreshToken, cookieOptions);
-
+        
         
         return res.status(200).json({
             success: true,
@@ -197,9 +198,9 @@ const login = async(req, res) => {
 
 //get profile
 const getProfile = async (req,res)=>{
-    const userId =  req.user.id;
+    const userId =  req.user;
 
-    const user = await User.findById(userId).select("-password"); // by putting this - we are removing password from the coming user objectFit: 
+    const user = await User.findById(userId).select("-password -refreshToken"); // by putting this - we are removing password from the coming user objectFit: 
 
     if(!user){
         return res.status(400).json({
@@ -211,8 +212,37 @@ const getProfile = async (req,res)=>{
     return res.status(200).json({
         success:true,
         message:"user profile accessed!",
+        data:user,
     })
 };
 
-export {resgister,verify,login,getProfile};
+const logout = async(req,res)=>{
+    try {
+        const user = await User.findById(req.user);
+        if(!user){
+            return res.status(401).json({
+                success:false,
+                message:"while logout user does n't exist",
+            });
+        }
+
+        user.refreshToken = null;
+        res.clearCookie("accessToken", { httpOnly: true });
+        res.clearCookie("refreshToken", { httpOnly: true });
+        await user.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "User logged out successfully",
+        });
+
+        
+    } catch (error) {
+        return res.status(401).json({
+            success:false,
+            message:`while logout err: ${error}`,
+        });        
+    }
+};
+export {resgister,verify,login,getProfile,logout};
 
